@@ -215,9 +215,8 @@ class PointPresenter{
       this.#tripEditComponent = new _view_site_edit_events_view__WEBPACK_IMPORTED_MODULE_0__["default"](event);
 
       this.#tripEventComponent.setEditCardToFormClickHandler(this.#handleEditForm);
-      this.#tripEventComponent.setFavoriteClickHandler(() => {
-        this.#changeData({ ...this.#event, isFavorite: !this.#event.isFavorite });
-      });
+      this.#tripEventComponent.setFavoriteClickHandler(this.#handleFavoriteClick);
+
       this.#tripEditComponent.setEditFormToCardClickHandler(() => {
         (0,_utils_render__WEBPACK_IMPORTED_MODULE_2__.replace)(this.#tripEventComponent, this.#tripEditComponent);
         document.removeEventListener('keydown', this.#escKeyDownHandler);
