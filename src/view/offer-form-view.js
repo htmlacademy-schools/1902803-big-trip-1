@@ -4,7 +4,7 @@ import '../../node_modules/flatpickr/dist/flatpickr.min.css';
 import dayjs from 'dayjs';
 import he from 'he';
 
-const createOfferForm = (point, offers, cities) => {
+const createOfferForm = (point, cities) => {
   const {
     pointType,
     destination,
@@ -43,6 +43,8 @@ const createOfferForm = (point, offers, cities) => {
     </label>
   </div>`;
   });
+
+  const validDescription = he.encode(destination);
 
   return `<li class="trip-events__item">
       <form class="event event--edit" action="#" method="post">
@@ -110,7 +112,7 @@ const createOfferForm = (point, offers, cities) => {
             <label class="event__label  event__type-output" for="event-destination-1">
               ${pointType}
             </label>
-            <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${he.encode(destination)}" list="destination-list-1" ${isDisabled ? 'disabled' : ''}>
+            <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${validDescription}" list="destination-list-1" ${isDisabled ? 'disabled' : ''}>
             <datalist id="destination-list-1">
               ${citiesList}
               
@@ -180,9 +182,8 @@ export default class OfferFormView extends SmartView {
   }
 
   get template() {
-    const offers = this.#pointModel.offers.filter((offer) => offer.type === this._data.pointType)[0];
     const cities = this.#pointModel.destinations.map((des) => des.name);
-    return createOfferForm(this._data, offers, cities);
+    return createOfferForm(this._data, cities);
   }
 
   setFormSubmitHandler = (callback) => {
@@ -200,6 +201,7 @@ export default class OfferFormView extends SmartView {
     this._callback.formDelete = callback;
     this.element.querySelector('.event__reset-btn').addEventListener('click', this.#formDeleteHandler);
   }
+
 
   #formDeleteHandler = (evt) =>{
     evt.preventDefault();
@@ -313,12 +315,26 @@ export default class OfferFormView extends SmartView {
   #updateClickHandler = (evt) =>{
     evt.preventDefault();
     this._pointType = evt.target.value;
+    this.#resetOffers();
     this._data = { ...this._data, pointType: this._pointType};
+    this._data.offer.offers = this.#getNewOffers(this._pointType);
     this.#updateForms();
   }
 
   #setDestinationHandler = () => {
     this.element.querySelector('.event__input--destination').addEventListener('change', this.#destinationHandler);
+  }
+
+  #resetOffers = () => {
+    const offers = this._data.offer.offers;
+    offers.forEach((offer) => {
+      offer.isChecked = false;
+    });
+  }
+
+  #getNewOffers = (pointType) => {
+    const offers = this.#pointModel.offers.filter((offer) => offer.type === pointType)[0].offers;
+    return offers;
   }
 
   #destinationHandler = () => {
@@ -338,15 +354,25 @@ export default class OfferFormView extends SmartView {
     });
   }
 
-  #offerHandler = (evt) => {
-    this.#chosePoint(evt.target.value);
-  }
 
-  #chosePoint = (offerDestination) => {
+  #offerHandler = (evt) => {
+    const offerDestination = evt.target.value;
     const newOffers = this._data.offer.offers;
     const currentPoint = this._data.offer.offers.filter((o) => o.title === offerDestination)[0];
     const currentOffer = {...currentPoint, isChecked : !currentPoint.isChecked};
     const currentOfferIndex = newOffers.findIndex((point) => point === currentPoint);
     newOffers[currentOfferIndex] = currentOffer;
+  }
+
+  setEscResetHandler = (callback) => {
+    this._callback.eskReset = callback;
+    document.addEventListener('keydown', this.#onEscKeydown);
+  }
+
+  #onEscKeydown = (evt) => {
+    if (evt.key === 'Escape' || evt.key === 'Esc')
+    {
+      this._callback.eskReset();
+    }
   }
 }
